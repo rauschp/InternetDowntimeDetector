@@ -3,27 +3,26 @@ from es_connector import EsConnector
 from datetime import datetime
 import requests
 import time
-import sys
+import os
 
 
 class DowntimeDetector(object):
 
     def __init__(self):
-        if len(sys.argv) < 3:
-            print("You must pass an elastic search host URL. Run 'python main.py h|help' for more detail")
-            sys.exit(2)
+        es_host = os.getenv('ES_HOST')
+        es_port = os.getenv('ES_PORT')
+        es_index_name = os.getenv('ES_INDEX_NAME')
 
-        if sys.argv[1] == "h" or sys.argv[1] == "help":
-            print("How to run: python main.py <Elastic Search Host> <Elastic Search Port> <Index Name (optional)>")
+        if es_index_name is None:
+            es_index_name = "internet_downtime"
 
-        es_hostname = sys.argv[1]
-        es_port = sys.argv[2]
-        index_name = "internet_downtime"
+        if es_host is None:
+            es_host = "localhost"
 
-        if len(sys.argv) == 4:
-            index_name = sys.argv[3]
+        if es_port is None:
+            es_port = 9200
 
-        self.connector = EsConnector(es_hostname, es_port, index_name)
+        self.connector = EsConnector(es_host, es_port, es_index_name)
 
     def run(self):
         while True:
@@ -38,10 +37,6 @@ class DowntimeDetector(object):
                     # Check if connection is restored
                     if self.is_connection_active():
                         successful_time = datetime.now()
-                        difference = successful_time - first_failure_time
-                        downtime_in_seconds = difference.total_seconds()
-                        print("Connection re-established. Downtime (s): % 12.0f" % downtime_in_seconds)
-
                         log = Log(first_failure_time, successful_time)
                         result = self.connector.insert_log(log)
 
