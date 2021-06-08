@@ -1,6 +1,6 @@
 from log import Log
 from es_connector import EsConnector
-from datetime import datetime
+from helper import create_now_timestamp
 import requests
 import time
 import os
@@ -12,6 +12,7 @@ class DowntimeDetector(object):
         es_host = os.getenv('ES_HOST')
         es_port = os.getenv('ES_PORT')
         es_index_name = os.getenv('ES_INDEX_NAME')
+        self.timezone = os.getenv('TIMEZONE')
 
         if es_index_name is None:
             es_index_name = "internet_downtime"
@@ -22,7 +23,10 @@ class DowntimeDetector(object):
         if es_port is None:
             es_port = 9200
 
-        self.connector = EsConnector(es_host, es_port, es_index_name)
+        if self.timezone is None:
+            self.timezone = "America/Indianapolis"
+
+        self.connector = EsConnector(es_host, es_port, es_index_name, self.timezone)
 
     def run(self):
         while True:
@@ -30,13 +34,13 @@ class DowntimeDetector(object):
                 print("Successful connection, waiting 10 seconds.")
                 time.sleep(10)
             else:
-                first_failure_time = datetime.now()
+                first_failure_time = create_now_timestamp(self.timezone)
 
                 # Check again until success
                 while True:
                     # Check if connection is restored
                     if self.is_connection_active():
-                        successful_time = datetime.now()
+                        successful_time = create_now_timestamp(self.timezone)
                         log = Log(first_failure_time, successful_time)
                         result = self.connector.insert_log(log)
 
