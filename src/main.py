@@ -43,7 +43,7 @@ class DowntimeDetector(object):
                         log = Log(first_failure_time, successful_time)
                         result = self.connector.insert_log(log)
 
-                        print("[Outage Detected] Start: " + first_failure_time + " | End: " + successful_time)
+                        print("[Outage Detected] Start: " + str(first_failure_time) + " | End: " + str(successful_time))
 
                         break
 
