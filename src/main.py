@@ -31,7 +31,6 @@ class DowntimeDetector(object):
     def run(self):
         while True:
             if self.is_connection_active():
-                print("Successful connection, waiting 10 seconds.")
                 time.sleep(10)
             else:
                 first_failure_time = create_now_timestamp(self.timezone)
@@ -43,6 +42,8 @@ class DowntimeDetector(object):
                         successful_time = create_now_timestamp(self.timezone)
                         log = Log(first_failure_time, successful_time)
                         result = self.connector.insert_log(log)
+
+                        print("[Outage Detected] Start: " + first_failure_time + " | End: " + successful_time)
 
                         break
 
